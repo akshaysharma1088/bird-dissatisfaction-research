@@ -60,3 +60,17 @@ def test_multidogo_headerless_format(tmp_path):
     rows=list(parse_multidogo(path))
     assert len(rows)==2
     assert rows[0]['turns'][-1][1]=='still broken'
+
+
+def test_multidogo_leading_blank_and_quoted_tab(tmp_path):
+    path=tmp_path/'software.tsv'
+    with path.open('w',encoding='utf8') as f:
+        f.write('\n')
+        for j,(role,text) in enumerate([
+            ('customer','hello'),('agent','hello'),
+            ('customer','some software issue'),('agent','try again'),
+            ('customer','still not working')]):
+            f.write(f'xyz\t{j}\tu{j}\t{text}\t{role}\n')
+    results=list(parse_multidogo(path))
+    assert len(results)==1
+    assert results[0]['turns'][-1][1]=='still not working'

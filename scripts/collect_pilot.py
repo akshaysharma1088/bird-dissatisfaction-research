@@ -72,29 +72,33 @@ def parse_abcd(path):
 
 def parse_multidogo(path):
     groups = defaultdict(list)
-    with path.open(encoding='utf-8-sig',newline='') as f:
-        reader = csv.reader(f, delimiter='\t')
-        try:
-            first = next(reader)
-        except StopIteration:
-            raise ValueError('Empty MultiDoGO TSV')
-        expected = ['conversationId','turnNumber','utteranceId','utterance','authorRole']
-        # The published unannotated software.tsv can be headerless even though
-        # the README documents five logical column names.
-        if first[:5] != expected:
-            f.seek(0)
-            reader = csv.reader(f, delimiter='\t')
-        for row_number, cells in enumerate(reader, 1):
+    expected = ['conversationId', 'turnNumber', 'utteranceId', 'utterance', 'authorRole']
+    with path.open(encoding='utf-8-sig', newline='') as f:
+        for row_number, cells in enumerate(csv.reader(f, delimiter='\t'), start=1):
+            if not cells or not any(v.strip() for v in cells):
+                continue  # An empty line is not a malformed dialogue row.
+            if cells[:5] == expected:
+                continue  # Some releases include a column-name header.
+            if len(cells) == 1 and cells[0].count(r'\t') >= 4:
+                cells = cells[0].split(r'\t')
             if len(cells) < 5:
-                raise ValueError(f'MultiDoGO malformed row {row_number}: {len(cells)} columns')
-            cid, turn_number, _, utterance, raw_role = cells[:5]
-            raw = raw_role.strip().lower()
+                # Do not print raw source text into a GitHub Actions log.
+                first = cells[0] if cells else ''
+                raise ValueError(
+                    f'MultiDoGO unexpected row {row_number}: fields={len(cells)}, '
+                    f'chars={len(first)}, literal_tabs={first.count(chr(92)+"t")}, '
+                    f'commas={first.count(",")}, pipes={first.count("|")}')
+            cid, turn_number, _ = cells[:3]
+            # If text contains unquoted tabs, preserve them rather than silently
+            # shifting the final speaker column.
+            utterance = '\t'.join(cells[3:-1])
+            raw = cells[-1].strip().lower()
             if raw not in ROLES:
                 raise ValueError(f'Unrecognized MultiDoGO role at row {row_number}: {raw}')
             groups[cid].append((int(turn_number), ROLES[raw], utterance))
     for cid, turns in groups.items():
-        ordered = [(role,text) for _,role,text in sorted(turns,key=lambda x:x[0])]
-        row = sample_prefix(cid, ordered,'MultiDoGO')
+        ordered = [(role, text) for _,role,text in sorted(turns,key=lambda x:x[0])]
+        row = sample_prefix(cid, ordered, 'MultiDoGO')
         if row: yield row
 
 
