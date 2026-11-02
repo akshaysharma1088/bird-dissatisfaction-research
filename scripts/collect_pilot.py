@@ -74,7 +74,12 @@ def parse_multidogo(path):
     groups = defaultdict(list)
     expected = ['conversationId', 'turnNumber', 'utteranceId', 'utterance', 'authorRole']
     with path.open(encoding='utf-8-sig', newline='') as f:
-        for row_number, cells in enumerate(csv.reader(f, delimiter='\t'), start=1):
+        # The official "software.tsv" release is in fact comma-delimited.
+        # Detect from the real header rather than trusting the extension.
+        first_line = f.readline()
+        delimiter = ',' if first_line.count(',') >= 4 and first_line.count('\t') < 4 else '\t'
+        f.seek(0)
+        for row_number, cells in enumerate(csv.reader(f, delimiter=delimiter), start=1):
             if not cells or not any(v.strip() for v in cells):
                 continue  # An empty line is not a malformed dialogue row.
             if cells[:5] == expected:
@@ -91,7 +96,7 @@ def parse_multidogo(path):
             cid, turn_number, _ = cells[:3]
             # If text contains unquoted tabs, preserve them rather than silently
             # shifting the final speaker column.
-            utterance = '\t'.join(cells[3:-1])
+            utterance = delimiter.join(cells[3:-1])
             raw = cells[-1].strip().lower()
             if raw not in ROLES:
                 raise ValueError(f'Unrecognized MultiDoGO role at row {row_number}: {raw}')
