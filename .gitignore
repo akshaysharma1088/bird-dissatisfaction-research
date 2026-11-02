@@ -1,0 +1,13 @@
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.pem
+*.key
+*.token
+*.partial
+data/private/
+results/private/
+source_linkage_PRIVATE.csv
+*.env
