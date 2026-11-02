@@ -72,15 +72,26 @@ def parse_abcd(path):
 
 def parse_multidogo(path):
     groups = defaultdict(list)
-    with path.open(encoding='utf-8',newline='') as f:
-        reader = csv.DictReader(f,delimiter='\t')
-        req = {'conversationId','turnNumber','utterance','authorRole'}
-        if not req.issubset(reader.fieldnames or []):
-            raise ValueError(f'MultiDoGO header missing {req-set(reader.fieldnames or [])}')
-        for row in reader:
-            raw = row['authorRole'].strip().lower()
-            if raw not in ROLES:raise ValueError(f'Unrecognized role: {raw}')
-            groups[row['conversationId']].append((int(row['turnNumber']),ROLES[raw],row['utterance']))
+    with path.open(encoding='utf-8-sig',newline='') as f:
+        reader = csv.reader(f, delimiter='\t')
+        try:
+            first = next(reader)
+        except StopIteration:
+            raise ValueError('Empty MultiDoGO TSV')
+        expected = ['conversationId','turnNumber','utteranceId','utterance','authorRole']
+        # The published unannotated software.tsv can be headerless even though
+        # the README documents five logical column names.
+        if first[:5] != expected:
+            f.seek(0)
+            reader = csv.reader(f, delimiter='\t')
+        for row_number, cells in enumerate(reader, 1):
+            if len(cells) < 5:
+                raise ValueError(f'MultiDoGO malformed row {row_number}: {len(cells)} columns')
+            cid, turn_number, _, utterance, raw_role = cells[:5]
+            raw = raw_role.strip().lower()
+            if raw not in ROLES:
+                raise ValueError(f'Unrecognized MultiDoGO role at row {row_number}: {raw}')
+            groups[cid].append((int(turn_number), ROLES[raw], utterance))
     for cid, turns in groups.items():
         ordered = [(role,text) for _,role,text in sorted(turns,key=lambda x:x[0])]
         row = sample_prefix(cid, ordered,'MultiDoGO')
