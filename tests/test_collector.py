@@ -45,3 +45,18 @@ def test_end_to_end_fixture(tmp_path):
     assert len({x['source_id'] for x in parse_abcd(raw/'abcd_v1.1.json.gz')})==20
     assert len({x['source_id'] for x in parse_multidogo(raw/'software.tsv')})==20
     assert len(select(parse_abcd(raw/'abcd_v1.1.json.gz'),'ABCD'))==15
+
+
+def test_multidogo_headerless_format(tmp_path):
+    path=tmp_path/'software.tsv'
+    with path.open('w',encoding='utf8') as f:
+        for i in range(2):
+            for j,(role,text) in enumerate([
+                ('customer','hello'),('agent','hello'),
+                ('customer','my outlook keeps crashing'),
+                ('agent','please reinstall'),('customer','still broken'),
+            ]):
+                f.write(f'{i}\t{j}\tu{i}{j}\t{text}\t{role}\n')
+    rows=list(parse_multidogo(path))
+    assert len(rows)==2
+    assert rows[0]['turns'][-1][1]=='still broken'
