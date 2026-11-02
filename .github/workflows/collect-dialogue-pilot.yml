@@ -1,0 +1,44 @@
+name: BIRD - collect blinded support-dialogue pilot
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/collect_pilot.py'
+      - '.github/workflows/collect-dialogue-pilot.yml'
+permissions:
+  contents: read
+jobs:
+  collect:
+    if: github.event.repository.private == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Collect the official ABCD and MultiDoGO corpora
+        run: python scripts/collect_pilot.py --download --output data/private/collection
+      - name: Verify output row counts without uploading source corpora
+        run: |
+          test "$(wc -l < data/private/collection/pilot_redacted_REVIEW_REQUIRED.jsonl)" = 30
+          test "$(wc -l < data/private/collection/source_linkage_PRIVATE.csv)" = 31
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BIRD-30-blinded-annotation-pilot-UNREVIEWED
+          path: |
+            data/private/collection/annotator_A.csv
+            data/private/collection/annotator_B.csv
+            data/private/collection/manifest.json
+          retention-days: 3
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BIRD-30-researcher-only-UNREVIEWED
+          path: |
+            data/private/collection/pilot_redacted_REVIEW_REQUIRED.jsonl
+            data/private/collection/source_linkage_PRIVATE.csv
+            data/private/collection/manifest.json
+          retention-days: 3
+          if-no-files-found: error
