@@ -74,3 +74,18 @@ def test_multidogo_leading_blank_and_quoted_tab(tmp_path):
     results=list(parse_multidogo(path))
     assert len(results)==1
     assert results[0]['turns'][-1][1]=='still not working'
+
+
+def test_multidogo_csv_despite_tsv_extension(tmp_path):
+    path=tmp_path/'software.tsv'
+    with path.open('w',encoding='utf8',newline='') as f:
+        writer=__import__('csv').writer(f)
+        writer.writerow(['conversationId','turnNumber','utteranceId','utterance','authorRole'])
+        for j,(role,text) in enumerate([
+            ('customer','hello'),('agent','hello'),
+            ('customer','the product, version 5, is broken'),('agent','try again'),
+            ('customer','it is still not working')]):
+            writer.writerow(['case1',j,f'uid{j}',text,role])
+    rows=list(parse_multidogo(path))
+    assert len(rows)==1
+    assert rows[0]['turns'][2][1]=='the product, version 5, is broken'
