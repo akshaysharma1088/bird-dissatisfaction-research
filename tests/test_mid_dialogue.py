@@ -73,7 +73,13 @@ def test_full_pipeline_with_fake_corpora(tmp_path):
     data=[json.loads(row) for row in (dest/'midpoint_cases_UNREVIEWED.jsonl').read_text().splitlines()]
     assert len(data)==10
     assert all(x['gold_labels'] is None and x['turns'][-1]['role']=='customer' for x in data)
-    assert all('i suggest reinstalling' not in ' '.join(t['text'] for t in x['turns']) for x in data)
+    # Later turns must be excluded relative to each chosen prediction point.
+    for case in data:
+        texts=[t['text'] for t in case['turns']]
+        assert 'anything else' not in texts
+        assert 'will check tomorrow, thanks' not in texts
+        if texts[-1]=='please, the software is still broken':
+            assert 'i suggest reinstalling' not in texts
     with (dest/'annotator_A_UNREVIEWED.csv').open(encoding='utf-8-sig') as f:
         anns=list(csv.DictReader(f))
     assert len(anns)==10
