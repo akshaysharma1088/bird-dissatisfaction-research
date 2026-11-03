@@ -2,7 +2,15 @@
 
 **Private academic research workspace** for behavior-aware detection of customer dissatisfaction across customer–agent conversations and social media.
 
-## Current milestone: collect full support conversations
+## Current progress — November 2, 2026
+
+- **60 new mid-conversation candidate decision points collected successfully** from ABCD (30) and MultiDoGO software (30), using blinded lexical-cue enrichment: [GitHub Actions run](https://github.com/akshaysharma1088/bird-dissatisfaction-research/actions/runs/41563966131). These are **unlabeled** and **NOT privacy-reviewed**.
+- The earlier **30 conversation-ending cases** were also collected and structurally audited; provisional A/B annotation files were byte-identical, so they **do not establish independent inter-annotator reliability**.
+- Mid-dialogue source integrity and selection details: [verified collection report](docs/VERIFIED_MID_DIALOGUE_COLLECTION_2026-11-02.md). Independent labeling and data-quality review: [Issue #8](https://github.com/akshaysharma1088/bird-dissatisfaction-research/issues/8).
+- The 60-candidate sample is **lexically enriched**, not prevalence-representative, and must not be used to make unbiased accuracy or dissatisfaction-rate claims.
+- No independently adjudicated gold labels or verified BIRD-versus-LLM comparative outcomes exist yet.
+
+## Earlier milestone: collect complete conversation endings
 
 This repository contains a tested, standalone collector for a **30-conversation calibration pilot**:
 
