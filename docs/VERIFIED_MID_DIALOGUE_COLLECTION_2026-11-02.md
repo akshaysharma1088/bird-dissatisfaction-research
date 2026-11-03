@@ -6,10 +6,14 @@
 
 - 60 distinct customer-turn decision points from research-elicited customer/agent dialogues.
 - 30 cases from ASAPP ABCD; 30 from Amazon Research MultiDoGO's software domain.
-- 60 distinct source conversations **within this second sample**. Potential source overlap with the earlier 30-ending sample has **not** been independently cross-checked.
+- 60 distinct source conversations within the second sample. A private source-ID mapping comparison against the original 30-ending pilot verified **0 overlapping source conversations** (90 distinct conversations across both pilots).
 - All cases are **mid-conversation**. The selected customer turn has at least one subsequent agent turn and one later customer turn in the upstream corpus, but neither is included in the case's prediction-time prefix.
 - Annotators receive two unfilled, source-blinded CSVs. Researcher-only linkage and screening categories are in a separate private artifact.
 - All automatically masked excerpts are **UNREVIEWED**. Downloaded source corpora were not uploaded or committed.
+
+### Privacy and completeness audit (researcher-only, November 2, 2026)
+
+The newly retrieved artifacts were independently inspected without publishing dialogue text or source IDs. Verified **612 chronological speech turns**, comprising **326 customer** and **286 agent** turns. Both blinded annotation files contain 60 cases with blank reference-label columns. An automated pattern screen flagged **15 cases for higher-priority manual privacy inspection**; **all 60** still require human privacy review. These flags are a triage aid, not proof of identification risk or approval of the others.
 
 ### Candidate screening mix (per source)
 
