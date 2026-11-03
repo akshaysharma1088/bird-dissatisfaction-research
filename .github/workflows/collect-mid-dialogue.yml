@@ -1,0 +1,57 @@
+name: BIRD - collect mid-conversation annotation candidates
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/collect_mid_dialogue.py'
+      - 'scripts/collect_pilot.py'
+      - '.github/workflows/collect-mid-dialogue.yml'
+permissions:
+  contents: read
+jobs:
+  collect-midpoints:
+    if: github.event.repository.private == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Collect source corpora and select mid-dialogue cases
+        run: python scripts/collect_mid_dialogue.py --download --n-per-source 30 --output data/private/midpoint
+      - name: Check output counts and unlabeled status
+        run: |
+          python - <<'PY'
+          import csv, json
+          from pathlib import Path
+          p=Path('data/private/midpoint')
+          rows=[json.loads(x) for x in (p/'midpoint_cases_UNREVIEWED.jsonl').read_text().splitlines()]
+          assert len(rows)==60 and len({x['blind_id'] for x in rows})==60
+          assert all(x['gold_labels'] is None and x['turns'][-1]['role']=='customer' for x in rows)
+          for side in ('A','B'):
+              with (p/f'annotator_{side}_UNREVIEWED.csv').open(encoding='utf-8-sig') as f:
+                  sheet=list(csv.DictReader(f))
+              assert len(sheet)==60 and all(not x['expressed_dissatisfaction'] for x in sheet)
+          print('60 distinct unlabeled mid-dialogue cases generated, privacy review pending')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BIRD-60-midpoint-annotators-UNREVIEWED
+          path: |
+            data/private/midpoint/annotator_A_UNREVIEWED.csv
+            data/private/midpoint/annotator_B_UNREVIEWED.csv
+            data/private/midpoint/manifest.json
+          retention-days: 3
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BIRD-60-midpoint-researcher-UNREVIEWED
+          path: |
+            data/private/midpoint/midpoint_cases_UNREVIEWED.jsonl
+            data/private/midpoint/source_linkage_RESEARCHER_ONLY.csv
+            data/private/midpoint/privacy_review_RESEARCHER_ONLY.csv
+            data/private/midpoint/manifest.json
+          retention-days: 3
+          if-no-files-found: error
