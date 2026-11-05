@@ -1,44 +1,100 @@
-# BIRD — Behavior-Informed Recognition of Dissatisfaction
+# BIRD: polite but unresolved
 
-**Private academic research workspace** for behavior-aware detection of customer dissatisfaction across customer–agent conversations and social media.
+**Detecting customer dissatisfaction that sentiment scores miss, in technical-support dialogues.**
 
-## Current progress — November 2, 2026
+A customer writes "Thanks for checking, but it still doesn't work." A sentiment lexicon reads
+"thanks" and scores the message neutral or positive. This repository holds the code and protocol
+for a pilot study that measures how often that happens, and whether simple behavioural cues
+(repeated failures, rebuttals, politeness next to an issue) catch what polarity misses.
 
-- **60 new mid-conversation candidate decision points collected successfully** from ABCD (30) and MultiDoGO software (30), using blinded lexical-cue enrichment: [GitHub Actions run](https://github.com/akshaysharma1088/bird-dissatisfaction-research/actions/runs/41563966131). These are **unlabeled** and **NOT privacy-reviewed**.
-- The earlier **30 conversation-ending cases** were also collected and structurally audited; provisional A/B annotation files were byte-identical, so they **do not establish independent inter-annotator reliability**.
-- Mid-dialogue source integrity and selection details: [verified collection report](docs/VERIFIED_MID_DIALOGUE_COLLECTION_2026-11-02.md). Independent labeling and data-quality review: [Issue #8](https://github.com/akshaysharma1088/bird-dissatisfaction-research/issues/8).
-- The 60-candidate sample is **lexically enriched**, not prevalence-representative, and must not be used to make unbiased accuracy or dissatisfaction-rate claims.
-- No independently adjudicated gold labels or verified BIRD-versus-LLM comparative outcomes exist yet.
+> **Paper.** A. Sharma, *Beyond Sentiment Polarity: Evaluating Behavior-Informed Customer
+> Dissatisfaction Signals in Technical-Support Dialogues: An Exploratory Pilot Study.*
+> Submitted to IET Software, 2026.
 
-## Earlier milestone: collect complete conversation endings
+## What the pilot found
 
-This repository contains a tested, standalone collector for a **30-conversation calibration pilot**:
+90 dialogue prefixes (1,088 turns) from two public, research-elicited corpora:
+30 conversation endings and 60 midpoints chosen to over-represent ambiguous turns.
+Reference labels: 34 `yes`, 56 `no_evidence` (expressed dissatisfaction), from a single annotator.
 
-- 15 conversations from [ASAPP ABCD](https://github.com/asappresearch/abcd), a research-elicited customer-service corpus.
-- 15 software-domain conversations from [Amazon Research MultiDoGO](https://github.com/awslabs/multi-domain-goal-oriented-dialogues-dataset), another research-elicited corpus.
-- Source-preserving speaker turns, deterministic selection, and automatic masking that **requires manual privacy review**.
-- Two source-blinded, **unlabeled** human annotation CSVs, plus a separately held source-ID mapping.
+| Method | Macro-F1 | Recall (yes) |
+| --- | ---: | ---: |
+| TextBlob, target turn | 0.526 | 17.6% |
+| VADER, target turn | 0.746 | 50.0% |
+| Twitter-RoBERTa (off the shelf), target turn | 0.830 | 73.5% |
+| TF-IDF + logistic regression, speaker-tagged prefix | 0.700 | 52.9% |
+| Issue-keyword rule (control) | 0.786 | 61.8% |
+| Sampling-stratum only (negative control, not deployable) | 0.790 | 76.5% |
+| **BIRD-lite, 20 behavioural cues** | **0.843** | **76.5%** |
+| **BIRD-lite hybrid (cues + speaker-tagged text)** | **0.845** | **79.4%** |
 
-The GitHub Actions collector runs automatically after the collection changes are merged into `main`, or manually from **Actions → BIRD - collect blinded support-dialogue pilot → Run workflow**. On success it creates two private artifacts with **3-day retention**. They are **UNREVIEWED** and must not be shared externally until a qualified researcher checks the text for sensitive details.
+Supervised rows use five-fold out-of-fold predictions (seed 2026), one prefix per conversation.
 
-Full corpus files and case-to-source mapping must not be committed to Git. See [annotation and collection protocol](docs/ANNOTATION_PROTOCOL.md).
+- **Polarity masking.** Of 24 midpoint issue reports, TextBlob scored 75% neutral or positive,
+  VADER 37.5% and Twitter-RoBERTa 16.7%.
+- **A CPU model matches a transformer.** BIRD-lite beats speaker-tagged TF-IDF by +0.145
+  Macro-F1 (95% paired bootstrap interval +0.051 to +0.245) and is level with Twitter-RoBERTa
+  (+0.015, interval -0.023 to +0.062).
+- **The controls matter.** A single keyword rule and a classifier that sees only the sampling
+  stratum come within 0.06 of BIRD-lite. We recommend reporting both controls on any
+  cue-enriched benchmark.
 
-## Run it locally
+## Limits, stated plainly
 
-Python 3.11 or newer recommended; no API keys or paid services required.
+- One annotator labelled all 90 prefixes; 14 flagged cases were rechecked by the same person,
+  not blind. There is no inter-annotator agreement yet.
+- The 60 midpoints were selected by keyword screens, so labels correlate with the sampling
+  strata (the negative control shows how much).
+- Both corpora are research-elicited English dialogues, not production support traffic, and
+  carry no customer satisfaction ratings.
 
-```bash
-python -m pip install pytest
-python -m pytest tests/test_collector.py -q
-python scripts/collect_pilot.py --download --output data/private/collection
+These are pilot estimates. A second, independent annotator is the first piece of future work.
+
+## Repository layout
+
+```
+scripts/collect_pilot.py             30 conversation endings (15 ABCD, 15 MultiDoGO software)
+scripts/collect_mid_dialogue.py      60 midpoints, 5 keyword strata x 6 per corpus
+scripts/explore_midpoint_no_labels.py label-free descriptive screens
+tests/                               15 tests on fictional fixtures only
+docs/ANNOTATION_PROTOCOL.md          collection and labelling protocol (conversation endings)
+docs/MID_DIALOGUE_PROTOCOL.md        midpoint selection protocol
+docs/history/                        dated working notes, kept for provenance
+.github/workflows/                   unit tests and the two collection jobs
 ```
 
-The collector fetches two large public data files and requires normal Internet access. `data/private/` is ignored by Git.
+## Reproduce the sample
 
-## Scientific integrity
+Python 3.11 or newer. No API keys or paid services.
 
-**No human gold-standard labels, GPT/Haiku experimental results, multilingual performance comparisons, or proven BIRD improvements exist yet.** This 30-conversation package is designed for *annotation-guideline calibration*, not statistical evidence of BIRD superiority.
+```bash
+python -m pip install pytest textblob==0.19.0
+python -m pytest tests -q
+python scripts/collect_pilot.py --download --output data/private/collection
+python scripts/collect_mid_dialogue.py --download --output data/private/midpoint
+```
 
-`polarity`, `expressed dissatisfaction`, `conversation resolution`, and direct customer satisfaction are distinct constructs. `thank you`/ `please` can be politeness alone; a `rejection` can be a benign refusal instead of a complaint.
+Selection is deterministic (SHA-256 ordering of conversation IDs), so the same 90 prefixes are
+rebuilt from the same public releases. Each run records the SHA-256 digest of every source file
+in its manifest, so you can confirm you used the same releases. Everything written to
+`data/private/` is git-ignored.
 
-Do not submit any research manuscript claiming empirical improvement until a larger independently adjudicated cross-domain benchmark and matched model evaluations have been completed.
+**Not in this repository:** dialogue text, the case-to-source mapping and case-level labels.
+They are kept out to respect the source licences and because automatic masking is not
+anonymisation.
+
+## Data sources
+
+| Corpus | Use here | Licence |
+| --- | --- | --- |
+| [ABCD](https://github.com/asappresearch/abcd) (Chen et al., NAACL 2021) | 45 conversations | MIT |
+| [MultiDoGO](https://github.com/awslabs/multi-domain-goal-oriented-dialogues-dataset), software domain (Peskov et al., EMNLP 2019) | 45 conversations | CDLA-Permissive-1.0 |
+
+## Cite
+
+See [`CITATION.cff`](CITATION.cff). A versioned archive with a DOI will be added on the first
+release.
+
+## Licence
+
+Code: MIT ([LICENSE](LICENSE)). The source corpora keep their own licences.
