@@ -1,0 +1,8 @@
+{
+  "title": "BIRD: behavior-informed signals of customer dissatisfaction in technical-support dialogues",
+  "upload_type": "software",
+  "description": "Code and protocol for a pilot study of customer dissatisfaction that sentiment polarity misses, on 90 dialogue prefixes from the public ABCD and MultiDoGO corpora. Includes deterministic, digest-checked collectors that rebuild the sample from the public releases, the annotation protocol and tests. Dialogue text, case-to-source mapping and case-level labels are not included.",
+  "creators": [{"name": "Sharma, Akshay", "orcid": "0009-0009-5718-2187"}],
+  "license": "MIT",
+  "keywords": ["sentiment analysis", "customer dissatisfaction", "technical-support dialogue", "negative controls", "BIRD"]
+}
