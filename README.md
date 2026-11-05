@@ -1,5 +1,7 @@
 # BIRD: polite but unresolved
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23968324.svg)](https://doi.org/10.5281/zenodo.23968324)
+
 **Detecting customer dissatisfaction that sentiment scores miss, in technical-support dialogues.**
 
 A customer writes "Thanks for checking, but it still doesn't work." A sentiment lexicon reads
@@ -92,8 +94,8 @@ anonymisation.
 
 ## Cite
 
-See [`CITATION.cff`](CITATION.cff). A versioned archive with a DOI will be added on the first
-release.
+See [`CITATION.cff`](CITATION.cff). Version 1.0.0 is archived on Zenodo:
+[10.5281/zenodo.23968324](https://doi.org/10.5281/zenodo.23968324).
 
 ## Licence
 
