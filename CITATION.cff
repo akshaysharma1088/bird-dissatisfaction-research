@@ -6,6 +6,7 @@ authors:
     given-names: Akshay
     orcid: "https://orcid.org/0009-0009-5718-2187"
 version: 1.0.0
+doi: 10.5281/zenodo.23968324
 date-released: 2026-11-04
 license: MIT
 repository-code: "https://github.com/akshaysharma1088/bird-dissatisfaction-research"
